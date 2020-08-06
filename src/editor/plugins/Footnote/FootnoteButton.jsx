@@ -113,20 +113,6 @@ export const updateFootnotesContextFromActiveFootnote = (
   }
 };
 
-// export const handleFootnoteButtonClick = (
-//   editor,
-//   footnote,
-//   saveSelection = true,
-// ) => {
-//   if (!footnote.getShowForm()) {
-//     updateFootnotesContextFromActiveFootnote(editor, footnote, {
-//       saveSelection,
-//     });
-
-//     footnote.setShowForm(true);
-//   }
-// };
-
 const FootnoteButton = () => {
   const editor = useSlate();
   const intl = useIntl();
@@ -137,28 +123,79 @@ const FootnoteButton = () => {
   const [selection, setSelection] = React.useState(null);
   const [formData, setFormData] = React.useState({});
 
-  const setAndSaveSelection = React.useCallback((sel) => {
-    setSelection(sel);
-    setShowEditForm(false);
-  }, []);
+  const setAndSaveSelection = React.useCallback(
+    (sel) => {
+      console.log('set and save selection,', sel);
+      setSelection(sel);
+      setShowEditForm(false);
+    },
+    [setSelection, setShowEditForm],
+  );
 
   const submitHandler = React.useCallback(
     (formData) => {
+      // debugger;
       // TODO: have an algorithm that decides which one is used
-      if (formData.footnote) {
-        // const sel = footnoteRef.current.getSelection();
-        const sel = selection; // should we save selection?
-        if (Range.isRange(sel)) {
-          Transforms.select(editor, sel);
-          insertFootnote(editor, { ...formData });
-        } else {
-          Transforms.deselect(editor);
-        }
+      // if (typeof formData.footnote !== 'string') {
+      // const sel = footnoteRef.current.getSelection();
+      console.log('submitHandler', selection);
+      const sel = selection; // should we save selection?
+      if (Range.isRange(sel)) {
+        Transforms.select(editor, sel);
+        insertFootnote(editor, { ...formData });
       } else {
-        unwrapFootnote(editor);
+        Transforms.deselect(editor);
       }
+      // } else {
+      // unwrapFootnote(editor);
+      // }
     },
     [editor, selection],
+  );
+
+  const openSidebar = React.useCallback(
+    (fromPluginToolbar) => {
+      // if (!showEditForm) {
+      // debugger;
+
+      const fromHoveringToolbar = !fromPluginToolbar;
+
+      // debugger;
+      if (fromPluginToolbar) {
+        console.log('fromPluginToolbar selection', selection);
+        updateFootnotesContextFromActiveFootnote(editor, {
+          setAndSaveSelection: setSelection,
+          // setAndSaveSelection,
+          setFormData,
+        });
+        // ReactEditor.focus(editor);
+      } else {
+        console.log('fromHoveringToolbar selection', selection);
+        insertFootnote(editor, {});
+        setFormData({});
+      }
+
+      // }
+
+      // const note = getActiveFootnote(editor);
+      // debugger;
+      // if (note) {
+      //   const [node] = note;
+      //   const { data, children } = node;
+      //   const r = {
+      //     ...data,
+      //     // ...JSON.parse(JSON.stringify(footnote.getFormData())),
+      //     // ...JSON.parse(
+      //     //   JSON.stringify(data),
+      //     // footnote: children?.[0]?.text,
+      // };
+      // console.log('R is ', r);
+      //   setFormData(r);
+      // } else {
+      setShowEditForm(true);
+      // }
+    },
+    [editor, selection, setSelection],
   );
 
   const PluginToolbar = React.useCallback(
@@ -170,16 +207,7 @@ const FootnoteButton = () => {
             basic
             aria-label={intl.formatMessage(messages.edit)}
             onMouseDown={() => {
-              if (!showEditForm) {
-                updateFootnotesContextFromActiveFootnote(editor, {
-                  // setAndSaveSelection: setSelection,
-                  setAndSaveSelection,
-                  setFormData,
-                });
-
-                setShowEditForm(true);
-                // ReactEditor.focus(editor);
-              }
+              openSidebar(true);
             }}
           >
             <Icon name={editingSVG} size="18px" />
@@ -200,10 +228,12 @@ const FootnoteButton = () => {
         </Button.Group>
       </>
     ),
-    [editor, intl, setAndSaveSelection, showEditForm],
+    [intl, openSidebar, editor],
   );
 
   usePluginToolbar(editor, isActiveFootnote, getActiveFootnote, PluginToolbar);
+
+  // console.log('render FootnoteButton,', selection);
 
   return (
     <>
@@ -213,6 +243,8 @@ const FootnoteButton = () => {
           title={FootnoteSchema.title}
           icon={<VoltoIcon size="24px" name={briefcaseSVG} />}
           onChangeField={(id, value) => {
+            console.log('onChangeField', selection);
+            // debugger;
             setFormData({
               ...formData,
               [id]: value,
@@ -222,16 +254,35 @@ const FootnoteButton = () => {
           headerActions={
             <>
               <button
-                onClick={() => {
+                onMouseDown={() => {
+                  console.log(
+                    '// #2 BEFORE / ',
+                    formData,
+                    getActiveFootnote(editor),
+                  );
                   setShowEditForm(false);
                   submitHandler(formData);
                   ReactEditor.focus(editor);
+                  console.log('BEFore ', selection);
+                  if (Range.isRange(selection)) {
+                    Transforms.select(editor, selection);
+                  }
+
+                  setTimeout(() => {
+                    console.log('beFORe', selection);
+                    Transforms.select(editor, selection);
+                    console.log(
+                      '// #2 BEFORE / ',
+                      selection,
+                      getActiveFootnote(editor),
+                    );
+                  }, 2000);
                 }}
               >
                 <VoltoIcon size="24px" name={checkSVG} />
               </button>
               <button
-                onClick={() => {
+                onMouseDown={() => {
                   setShowEditForm(false);
                   ReactEditor.focus(editor);
                 }}
@@ -247,25 +298,7 @@ const FootnoteButton = () => {
         active={isFootnote}
         disabled={isFootnote}
         onMouseDown={() => {
-          const note = getActiveFootnote(editor);
-          // debugger;
-          if (note) {
-            //   const [node] = note;
-            //   const { data, children } = node;
-            //   const r = {
-            //     ...data,
-            //     // ...JSON.parse(JSON.stringify(footnote.getFormData())),
-            //     // ...JSON.parse(
-            //     //   JSON.stringify(data),
-            //     // footnote: children?.[0]?.text,
-            // };
-            // console.log('R is ', r);
-            //   setFormData(r);
-          } else {
-            insertFootnote(editor, {});
-            setFormData({});
-            setShowEditForm(true);
-          }
+          openSidebar(false);
         }}
         icon={tagSVG}
       />

@@ -11,6 +11,7 @@ import { settings } from '~/config';
 
 import withTestingFeatures from './extensions/withTestingFeatures';
 import { fixSelection } from 'volto-slate/utils';
+import { getActiveFootnote } from './plugins/Footnote/FootnoteButton';
 
 // import isHotkey from 'is-hotkey';
 // import { toggleMark } from './utils';
@@ -98,12 +99,38 @@ const SlateEditor = ({
   const [PluginToolbarChildren, setPluginToolbar] = React.useState(null);
   editor.setPluginToolbar = setPluginToolbar;
 
+  const handleChange = React.useCallback(
+    (ev) => {
+      // footnoteContext.setSelection(
+      //   JSON.parse(JSON.stringify(editor.selection)),
+      // );
+      console.log('// BEFORE / ', getActiveFootnote(editor));
+      // TODO: somehow filter to do this only if the selection changed
+      // console.log('BEFORE', editor.selection);
+      onChange(ev);
+      // console.log('AFTER', editor.selection);
+
+      console.log('// AFTER / ', getActiveFootnote(editor));
+      // if (footnoteContext.getShowForm()) {
+      //   updateFootnotesContextFromActiveFootnote(editor, footnoteContext, {
+      //     saveSelection: false,
+      //     // clearIfNoActiveFootnote: false,
+      //   });
+      // }
+    },
+    [editor, onChange],
+  );
+
   return (
     <div
       {...rest['debug-values']} // used for `data-` HTML attributes set in the withTestingFeatures HOC
       className={cx('slate-editor', { 'show-toolbar': showToolbar, selected })}
     >
-      <Slate editor={editor} value={value || initialValue} onChange={onChange}>
+      <Slate
+        editor={editor}
+        value={value || initialValue}
+        onChange={handleChange}
+      >
         {PluginToolbarChildren && (
           <PluginToolbar selected={selected}>
             {PluginToolbarChildren}
