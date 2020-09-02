@@ -18,6 +18,7 @@ import { toggleMark } from 'volto-slate/utils';
 import './less/editor.less';
 
 const SlateEditor = ({
+  toolbarAlways,
   selected,
   value,
   onChange,
@@ -131,7 +132,7 @@ const SlateEditor = ({
         value={value || initialValue}
         onChange={handleChange}
       >
-        {selected ? (
+        {!toolbarAlways && selected ? (
           hasRangeSelection(editor) ? (
             <SlateToolbar
               selected={selected}
@@ -144,6 +145,15 @@ const SlateEditor = ({
               plugins={slate.contextToolbarButtons}
             />
           )
+        ) : (
+          ''
+        )}
+        {toolbarAlways ? (
+          <SlateToolbar
+            selected={selected}
+            showToolbar={true}
+            setShowToolbar={setShowToolbar}
+          />
         ) : (
           ''
         )}

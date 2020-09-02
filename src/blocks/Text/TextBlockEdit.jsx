@@ -30,6 +30,7 @@ import './css/editor.css';
 
 const TextBlockEdit = (props) => {
   const {
+    toolbarAlways,
     block,
     data,
     detached,
@@ -174,6 +175,7 @@ const TextBlockEdit = (props) => {
           </div>
         ) : (
           <SlateEditor
+            toolbarAlways={toolbarAlways}
             index={index}
             properties={properties}
             onAddBlock={onAddBlock}
